@@ -18,3 +18,75 @@
 # new tiny jpg file)
 # enjoy!
 # Dave Cote :]
+############################################################################
+
+import httplib, mimetypes, android, sys
+
+def post_multipart(host, selector, fields, files):
+    content_type, body = encode_multipart_formdata(fields, files)
+    h = httplib.HTTP(host)
+    h.putrequest('POST', selector)
+    h.putheader('content-type', content_type)
+    h.putheader('content-length', str(len(body)))
+    h.endheaders()
+    h.send(body)
+    errcode, errmsg, headers = h.getreply()
+    return h.file.read()
+def encode_multipart_formdata(fields, files):
+    BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
+    CRLF = '\r\n'
+    L = []
+    for (key, value) in fields:
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="%s"' % key)
+        L.append('')
+        L.append(value)
+    for (key, filename, value) in files:
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
+        L.append('Content-Type: %s' % get_content_type(filename))
+        L.append('')
+        L.append(value)
+    L.append('--' + BOUNDARY + '--')
+    L.append('')
+    body = CRLF.join(L)
+    content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
+    return content_type, body
+def get_content_type(filename):
+    return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+#open html file after writing it, my info for the main app screen:
+im2cote=file.open('/sdcard/im2cote.html','w')
+im2cote.write('\n'.join(['<html><head></head><div style="width:250px;height:370px;border:5px solid grey;"><body bgcolor="#000000"><h><p>...</p>.<font color="#FFFFFF"><font size="4">&nbsp;&nbsp;&nbsp;SeeSay - by Dave Cote</h1><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#FFFFFF"><font size="2">e: info@davcote.com</font></p><p><font color="#000000">.....</font></p><p><font color="#FFFFFF">&nbsp;<font size="3">Please zoom in to take picture</font></p><font color="#FFFFFF">&nbsp;<font size="3">otherwise the picture file will</font></p><p><font colour="#FFFFFF">&nbsp;<font size="3">be too large to decode . . . . . .</font></p></body></html></div>'])
+              )
+im2cote.close()
+droid.webViewShow('file:///sdcard/im2cote.html')
+
+#take picture:
+droid=android.Android()
+droid.cameraInteractiveCapturePicture('/sdcard/jpeg.jpg')
+
+#resize new jpeg by extracting it's thumbnail with EXIF.py and resaving:
+#fileTHUMB = open("jpeg.jpg",'rb')
+#tags = EXIF.process_file(fileTHUMB)
+# save the thumbnail into the jpg format file
+#fileTHUMB = open("jpeg.jpg",'wb')
+#fileTHUMB.write(tags["JPEGThumbnail"])
+#fileTHUMB.close()
+
+#send pic to cloud:
+host = 'appsv.ocrgrid.org'
+selector = '/cgi-bin/weocr/submit_tesseract.cgi'
+fields = [('outputencoding', 'utf-8'), ('outputformat', 'txt')]
+with open('/sdcard/jpeg.jpg', 'rb') as jpeg:
+    files = [('userfile', 'jpeg.jpg', jpeg.read())]
+response = post_multipart(host, selector, fields, files)  
+
+#clean out garbage:  WORKS!!!
+def ExtractAlphaNumeric(InputString):
+   from string import ascii_letters,digits
+   return "".join([ch for ch in InputString if ch in (ascii_letters+digits+' '+'.'+','+'\n'+'!'+'?'+'@'+'$'+'%'+'&')])
+response=ExtractAlphaNumeric(response)
+
+#speak response:
+droid.ttsSpeak(response)
