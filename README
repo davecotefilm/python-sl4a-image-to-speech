@@ -1,0 +1,20 @@
+# a simple python script that is compatible with sl4a
+# it creates an html project welcome screen,
+# saves it to sdcard, then takes a picture on device camera
+# next the jpg is sent to a web ocr to translate it to text
+# the returned text is spoken by ttsSpeak on the device
+
+# problems:
+# image file is too large for web ocr to handle, so
+# one needs to zoom in on device camera before 
+# taking picture.
+# 
+# EXIF.py (downloadable, google search it) extracts image
+# exif data, particularely the thumbnail data, and saves
+# a new, tiny jpg.  unfortunately, this new tiny jpg
+# is not a recognizable image to the web service, as it has
+# no header data of it's own.  if someone can figure this 
+# out, please let me know (ie: add new exif header to
+# new tiny jpg file)
+# enjoy!
+# Dave Cote :]
